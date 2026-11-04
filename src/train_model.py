@@ -167,3 +167,12 @@ print("Logistic Regression Recall:",
       round(lr_recall * 100, 2), "%")
 print("Random Forest Recall:",
       round(rf_recall * 100, 2), "%")
+
+import joblib
+
+# Save the trained Random Forest pipeline
+model_path = project_folder / "models" / "loan_default_model.pkl"
+
+joblib.dump(rf_model, model_path)
+
+print("Model saved successfully!")
