@@ -1,21 +1,32 @@
-
 import streamlit as st
 import pandas as pd
 import joblib
 from pathlib import Path
 
+
+# --------------------------------------------------
 # Load the trained machine learning model
+# --------------------------------------------------
+
 model_path = Path(__file__).parent / "models" / "loan_default_model.pkl"
 model = joblib.load(model_path)
 
-# Configure the Streamlit page
+
+# --------------------------------------------------
+# Configure Streamlit page
+# --------------------------------------------------
+
 st.set_page_config(
     page_title="Loan Default Prediction",
     page_icon="🏦",
     layout="centered"
 )
 
+
+# --------------------------------------------------
 # Application title and description
+# --------------------------------------------------
+
 st.title("🏦 Loan Default Prediction System")
 
 st.write(
@@ -25,10 +36,13 @@ st.write(
 
 st.divider()
 
-# Borrower input form
+
+# --------------------------------------------------
+# Borrower Information
+# --------------------------------------------------
+
 st.subheader("Borrower Information")
 
-col1, col2 = st.columns(2)
 
 age = st.number_input(
     "Borrower's Age",
@@ -92,12 +106,17 @@ late_60_89 = st.number_input(
     value=0
 )
 
+
 st.divider()
 
-# Predict loan default risk
+
+# --------------------------------------------------
+# Predict Loan Default Risk
+# --------------------------------------------------
+
 if st.button("Predict Loan Default Risk"):
 
-    # Prepare borrower data in the correct feature order
+    # Prepare borrower data
     input_data = pd.DataFrame([{
         "RevolvingUtilizationOfUnsecuredLines": revolving_utilization,
         "age": age,
@@ -111,28 +130,62 @@ if st.button("Predict Loan Default Risk"):
         "NumberOfDependents": dependents
     }])
 
-    # Generate prediction and estimated probability
+    # Generate prediction
     prediction = model.predict(input_data)[0]
+
+    # Calculate probability of serious delinquency
     probability = model.predict_proba(input_data)[0][1]
 
-    # Display prediction result
+
+    # --------------------------------------------------
+    # Display Prediction Result
+    # --------------------------------------------------
+
     st.subheader("Loan Default Risk Result")
 
+
     if prediction == 1:
+
         st.error(
             "High Risk: The model predicts possible serious delinquency."
         )
+
     else:
+
         st.success(
             "Lower Risk: The model predicts a lower likelihood "
             "of serious delinquency."
         )
 
-    st.write(f"Estimated default risk: {probability:.2%}")
 
-    # Display probability bar and disclaimer
+    # Display probability
+    st.write(
+        f"Estimated default risk: {probability:.2%}"
+    )
+
+
+    # --------------------------------------------------
+    # NEW FEATURE: Risk Level
+    # --------------------------------------------------
+
+    if probability < 0.10:
+
+        st.success("🟢 Risk Level: Low")
+
+    elif probability < 0.30:
+
+        st.warning("🟠 Risk Level: Medium")
+
+    else:
+
+        st.error("🔴 Risk Level: High")
+
+
+    # Probability progress bar
     st.progress(float(probability))
 
+
+    # Disclaimer
     st.caption(
         "This percentage is a model estimate, not a guarantee "
         "of whether a borrower will default."
