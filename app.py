@@ -180,7 +180,34 @@ if st.button("Predict Loan Default Risk"):
 
         st.error("🔴 Risk Level: High")
 
+       # --------------------------------------------------
+# Risk Factors
+# --------------------------------------------------
 
+st.subheader("⚠️ Risk Factors")
+
+risk_factors = []
+
+if late_90 > 0:
+    risk_factors.append("90+ day late payments detected.")
+
+if late_60_89 > 0:
+    risk_factors.append("60–89 day late payments detected.")
+
+if late_30_59 > 0:
+    risk_factors.append("30–59 day late payments detected.")
+
+if revolving_utilization > 0.50:
+    risk_factors.append("High revolving credit utilization.")
+
+if debt_ratio > 0.50:
+    risk_factors.append("High debt ratio.")
+
+if len(risk_factors) == 0:
+    st.info("No major risk factors detected from the provided information.")
+else:
+    for factor in risk_factors:
+        st.warning(factor)
     # Probability progress bar
     st.progress(float(probability))
 
