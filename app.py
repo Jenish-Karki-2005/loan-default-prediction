@@ -11,6 +11,10 @@ from pathlib import Path
 model_path = Path(__file__).parent / "models" / "loan_default_model.pkl"
 model = joblib.load(model_path)
 
+# Load model performance metrics
+metrics_path = Path(__file__).parent / "models" / "model_metrics.pkl"
+metrics = joblib.load(metrics_path)
+
 
 # --------------------------------------------------
 # Configure Streamlit page
@@ -42,7 +46,6 @@ st.divider()
 # --------------------------------------------------
 
 st.subheader("Borrower Information")
-
 
 age = st.number_input(
     "Borrower's Age",
@@ -143,20 +146,15 @@ if st.button("Predict Loan Default Risk"):
 
     st.subheader("Loan Default Risk Result")
 
-
     if prediction == 1:
-
         st.error(
             "High Risk: The model predicts possible serious delinquency."
         )
-
     else:
-
         st.success(
             "Lower Risk: The model predicts a lower likelihood "
             "of serious delinquency."
         )
-
 
     # Display probability
     st.write(
@@ -165,55 +163,98 @@ if st.button("Predict Loan Default Risk"):
 
 
     # --------------------------------------------------
-    # NEW FEATURE: Risk Level
+    # Risk Level
     # --------------------------------------------------
 
     if probability < 0.10:
-
         st.success("🟢 Risk Level: Low")
 
     elif probability < 0.30:
-
         st.warning("🟠 Risk Level: Medium")
 
     else:
-
         st.error("🔴 Risk Level: High")
 
-       # --------------------------------------------------
-# Risk Factors
-# --------------------------------------------------
 
-st.subheader("⚠️ Risk Factors")
+    # --------------------------------------------------
+    # Risk Factors
+    # --------------------------------------------------
 
-risk_factors = []
+    st.subheader("⚠️ Risk Factors")
 
-if late_90 > 0:
-    risk_factors.append("90+ day late payments detected.")
+    risk_factors = []
 
-if late_60_89 > 0:
-    risk_factors.append("60–89 day late payments detected.")
+    if late_90 > 0:
+        risk_factors.append(
+            "90+ day late payments detected."
+        )
 
-if late_30_59 > 0:
-    risk_factors.append("30–59 day late payments detected.")
+    if late_60_89 > 0:
+        risk_factors.append(
+            "60–89 day late payments detected."
+        )
 
-if revolving_utilization > 0.50:
-    risk_factors.append("High revolving credit utilization.")
+    if late_30_59 > 0:
+        risk_factors.append(
+            "30–59 day late payments detected."
+        )
 
-if debt_ratio > 0.50:
-    risk_factors.append("High debt ratio.")
+    if revolving_utilization > 0.50:
+        risk_factors.append(
+            "High revolving credit utilization."
+        )
 
-if len(risk_factors) == 0:
-    st.info("No major risk factors detected from the provided information.")
-else:
-    for factor in risk_factors:
-        st.warning(factor)
-    # Probability progress bar
+    if debt_ratio > 0.50:
+        risk_factors.append(
+            "High debt ratio."
+        )
+
+    if len(risk_factors) == 0:
+        st.info(
+            "No major risk factors detected from the provided information."
+        )
+
+    else:
+        for factor in risk_factors:
+            st.warning(factor)
+
+
+    # --------------------------------------------------
+    # Probability Progress Bar
+    # --------------------------------------------------
+
     st.progress(float(probability))
 
 
+    # --------------------------------------------------
     # Disclaimer
+    # --------------------------------------------------
+
     st.caption(
         "This percentage is a model estimate, not a guarantee "
         "of whether a borrower will default."
     )
+
+
+# --------------------------------------------------
+# Model Performance
+# --------------------------------------------------
+
+st.divider()
+
+st.subheader("📊 Model Performance")
+
+st.write("Random Forest Model")
+
+st.write(
+    f"Accuracy: {metrics['accuracy']:.2%}"
+)
+
+st.write(
+    f"Class 1 Recall: {metrics['recall']:.2%}"
+)
+
+st.caption(
+    "Performance metrics are based on the test dataset "
+    "used during model evaluation."
+)
