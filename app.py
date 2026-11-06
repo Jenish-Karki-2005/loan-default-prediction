@@ -251,7 +251,15 @@ st.write(
 )
 
 st.write(
+    f"Precision: {metrics['precision']:.2%}"
+)
+
+st.write(
     f"Class 1 Recall: {metrics['recall']:.2%}"
+)
+
+st.write(
+    f"F1-Score: {metrics['f1_score']:.2%}"
 )
 
 st.caption(

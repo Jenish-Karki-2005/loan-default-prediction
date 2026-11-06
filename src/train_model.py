@@ -157,10 +157,22 @@ print("Random Forest Accuracy:",
 
 
 # Compare class 1 recall
-from sklearn.metrics import recall_score
+from sklearn.metrics import recall_score, precision_score, f1_score
 
 lr_recall = recall_score(y_test, y_pred, pos_label=1)
 rf_recall = recall_score(y_test, rf_pred, pos_label=1)
+
+# Calculate Random Forest precision and F1-score
+rf_precision = precision_score(y_test, rf_pred, pos_label=1)
+rf_f1 = f1_score(y_test, rf_pred, pos_label=1)
+
+print("\n===== RANDOM FOREST METRICS =====")
+print("Random Forest Precision:",
+      round(rf_precision * 100, 2), "%")
+print("Random Forest Recall:",
+      round(rf_recall * 100, 2), "%")
+print("Random Forest F1-Score:",
+      round(rf_f1 * 100, 2), "%")
 
 print("\n===== CLASS 1 RECALL COMPARISON =====")
 print("Logistic Regression Recall:",
@@ -179,8 +191,10 @@ print("\nRandom Forest model saved successfully.")
 
 # Save model performance metrics
 metrics = {
-    "accuracy": rf_accuracy,
-    "recall": rf_recall
+     "accuracy": rf_accuracy,
+    "precision": rf_precision,
+    "recall": rf_recall,
+    "f1_score": rf_f1
 }
 
 metrics_path = project_folder / "models" / "model_metrics.pkl"
