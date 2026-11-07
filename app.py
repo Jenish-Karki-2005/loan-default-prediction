@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import joblib
@@ -5,161 +6,204 @@ from pathlib import Path
 
 
 # --------------------------------------------------
-# Load the trained machine learning model
-# --------------------------------------------------
-
-model_path = Path(__file__).parent / "models" / "loan_default_model.pkl"
-model = joblib.load(model_path)
-
-# Load model performance metrics
-metrics_path = Path(__file__).parent / "models" / "model_metrics.pkl"
-metrics = joblib.load(metrics_path)
-
-
-# --------------------------------------------------
-# Configure Streamlit page
+# Page Configuration
 # --------------------------------------------------
 
 st.set_page_config(
     page_title="Loan Default Prediction",
-    page_icon="🏦",
-    layout="centered"
+    page_icon="💰",
+    layout="wide"
 )
 
 
 # --------------------------------------------------
-# Application title and description
+# Load Model and Metrics
 # --------------------------------------------------
 
-st.title("🏦 Loan Default Prediction System")
+BASE_DIR = Path(__file__).resolve().parent
+
+MODEL_PATH = BASE_DIR / "models" / "loan_default_model.pkl"
+METRICS_PATH = BASE_DIR / "models" / "model_metrics.pkl"
+
+
+try:
+    model = joblib.load(MODEL_PATH)
+    metrics = joblib.load(METRICS_PATH)
+except FileNotFoundError:
+    st.error(
+        "Model files not found. Please make sure the required files "
+        "are present inside the 'models' folder."
+    )
+    st.stop()
+
+
+# --------------------------------------------------
+# Application Header
+# --------------------------------------------------
+
+st.title("💰 Loan Default Prediction & Credit Risk Analysis")
 
 st.write(
-    "Predict the likelihood of serious loan delinquency "
-    "using a Machine Learning model."
+    "Enter the borrower's financial and credit information "
+    "to estimate the likelihood of serious loan delinquency."
 )
-
-st.divider()
 
 
 # --------------------------------------------------
 # Borrower Information
 # --------------------------------------------------
 
-st.subheader("Borrower Information")
+st.header("Borrower Information")
 
-age = st.number_input(
-    "Borrower's Age",
-    min_value=18,
-    max_value=100,
-    value=30
-)
-
-monthly_income = st.number_input(
-    "Monthly Income",
-    min_value=0,
-    value=30000
-)
-
-dependents = st.number_input(
-    "Number of Dependents",
-    min_value=0,
-    max_value=20,
-    value=0
-)
-
-credit_lines = st.number_input(
-    "Number of Open Credit Lines and Loans",
-    min_value=0,
-    value=5
-)
-
-revolving_utilization = st.number_input(
-    "Revolving Credit Utilization",
-    min_value=0.0,
-    value=0.30
-)
-
-late_30_59 = st.number_input(
-    "Past-Due Payments: 30–59 Days",
-    min_value=0,
-    value=0
-)
-
-debt_ratio = st.number_input(
-    "Debt Ratio",
-    min_value=0.0,
-    value=0.30
-)
-
-late_90 = st.number_input(
-    "Past-Due Payments: 90+ Days",
-    min_value=0,
-    value=0
-)
-
-real_estate_loans = st.number_input(
-    "Number of Real Estate Loans",
-    min_value=0,
-    value=1
-)
-
-late_60_89 = st.number_input(
-    "Past-Due Payments: 60–89 Days",
-    min_value=0,
-    value=0
-)
+col1, col2 = st.columns(2)
 
 
-st.divider()
+with col1:
+
+    age = st.number_input(
+        "Borrower's Age",
+        min_value=18,
+        max_value=100,
+        value=30,
+        step=1,
+        key="age"
+    )
+
+    monthly_income = st.number_input(
+        "Monthly Income",
+        min_value=0.0,
+        value=20000.0,
+        step=1000.0,
+        key="monthly_income"
+    )
+
+    dependents = st.number_input(
+        "Number of Dependents",
+        min_value=0,
+        max_value=20,
+        value=3,
+        step=1,
+        key="dependents"
+    )
+
+    credit_lines = st.number_input(
+        "Number of Open Credit Lines and Loans",
+        min_value=0,
+        max_value=100,
+        value=3,
+        step=1,
+        key="credit_lines"
+    )
+
+    revolving_utilization = st.number_input(
+        "Revolving Credit Utilization",
+        min_value=0.0,
+        value=0.80,
+        step=0.01,
+        format="%.2f",
+        key="revolving_utilization"
+    )
+
+
+with col2:
+
+    late_30_59 = st.number_input(
+        "Past-Due Payments: 30–59 Days",
+        min_value=0,
+        max_value=100,
+        value=2,
+        step=1,
+        key="late_30_59"
+    )
+
+    debt_ratio = st.number_input(
+        "Debt Ratio",
+        min_value=0.0,
+        value=0.70,
+        step=0.01,
+        format="%.2f",
+        key="debt_ratio"
+    )
+
+    late_90 = st.number_input(
+        "Past-Due Payments: 90+ Days",
+        min_value=0,
+        max_value=100,
+        value=1,
+        step=1,
+        key="late_90"
+    )
+
+    real_estate_loans = st.number_input(
+        "Number of Real Estate Loans",
+        min_value=0,
+        max_value=100,
+        value=1,
+        step=1,
+        key="real_estate_loans"
+    )
+
+    late_60_89 = st.number_input(
+        "Past-Due Payments: 60–89 Days",
+        min_value=0,
+        max_value=100,
+        value=1,
+        step=1,
+        key="late_60_89"
+    )
 
 
 # --------------------------------------------------
-# Predict Loan Default Risk
+# Prediction Button
 # --------------------------------------------------
 
 if st.button("Predict Loan Default Risk"):
 
-    # Prepare borrower data
-    input_data = pd.DataFrame([{
-        "RevolvingUtilizationOfUnsecuredLines": revolving_utilization,
-        "age": age,
-        "NumberOfTime30-59DaysPastDueNotWorse": late_30_59,
-        "DebtRatio": debt_ratio,
-        "MonthlyIncome": monthly_income,
-        "NumberOfOpenCreditLinesAndLoans": credit_lines,
-        "NumberOfTimes90DaysLate": late_90,
-        "NumberRealEstateLoansOrLines": real_estate_loans,
-        "NumberOfTime60-89DaysPastDueNotWorse": late_60_89,
-        "NumberOfDependents": dependents
-    }])
+    # Create input DataFrame
+    # The column names and order must match
+    # the features used during model training.
 
-    # Generate prediction
+    input_data = pd.DataFrame({
+        "RevolvingUtilizationOfUnsecuredLines": [
+            revolving_utilization
+        ],
+        "age": [
+            age
+        ],
+        "NumberOfTime30-59DaysPastDueNotWorse": [
+            late_30_59
+        ],
+        "DebtRatio": [
+            debt_ratio
+        ],
+        "MonthlyIncome": [
+            monthly_income
+        ],
+        "NumberOfOpenCreditLinesAndLoans": [
+            credit_lines
+        ],
+        "NumberOfTimes90DaysLate": [
+            late_90
+        ],
+        "NumberRealEstateLoansOrLines": [
+            real_estate_loans
+        ],
+        "NumberOfTime60-89DaysPastDueNotWorse": [
+            late_60_89
+        ],
+        "NumberOfDependents": [
+            dependents
+        ]
+    })
+
+
+    # --------------------------------------------------
+    # Make Prediction
+    # --------------------------------------------------
+
     prediction = model.predict(input_data)[0]
 
-    # Calculate probability of serious delinquency
     probability = model.predict_proba(input_data)[0][1]
-
-
-    # --------------------------------------------------
-    # Display Prediction Result
-    # --------------------------------------------------
-
-    st.subheader("Loan Default Risk Result")
-
-    if prediction == 1:
-        st.error(
-            "High Risk: The model predicts possible serious delinquency."
-        )
-    else:
-        st.success(
-            "Lower Risk: The model predicts a lower likelihood "
-            "of serious delinquency."
-        )
-
-    # Display probability
-    st.write(
-        f"Estimated default risk: {probability:.2%}"
-    )
 
 
     # --------------------------------------------------
@@ -167,13 +211,65 @@ if st.button("Predict Loan Default Risk"):
     # --------------------------------------------------
 
     if probability < 0.10:
-        st.success("🟢 Risk Level: Low")
+        risk_level = "🟢 Low"
 
     elif probability < 0.30:
-        st.warning("🟠 Risk Level: Medium")
+        risk_level = "🟠 Medium"
 
     else:
-        st.error("🔴 Risk Level: High")
+        risk_level = "🔴 High"
+
+
+    # --------------------------------------------------
+    # Display Prediction Result
+    # --------------------------------------------------
+
+    st.header("Loan Default Risk Result")
+
+    result_col1, result_col2 = st.columns(2)
+
+    with result_col1:
+
+        st.metric(
+            label="Estimated Default Risk",
+            value=f"{probability:.2%}"
+        )
+
+    with result_col2:
+
+        st.metric(
+            label="Risk Level",
+            value=risk_level
+        )
+
+
+    # --------------------------------------------------
+    # Risk Message
+    # --------------------------------------------------
+
+    # The message is based on the same probability
+    # thresholds used for the Low/Medium/High risk level.
+
+    if probability < 0.10:
+
+        st.success(
+            "Low Risk: The model predicts a low likelihood "
+            "of serious delinquency."
+        )
+
+    elif probability < 0.30:
+
+        st.warning(
+            "Medium Risk: The model predicts a moderate likelihood "
+            "of serious delinquency."
+        )
+
+    else:
+
+        st.error(
+            "High Risk: The model predicts a high likelihood "
+            "of serious delinquency."
+        )
 
 
     # --------------------------------------------------
@@ -209,14 +305,17 @@ if st.button("Predict Loan Default Risk"):
             "High debt ratio."
         )
 
-    if len(risk_factors) == 0:
-        st.info(
-            "No major risk factors detected from the provided information."
-        )
 
-    else:
+    if risk_factors:
+
         for factor in risk_factors:
             st.warning(factor)
+
+    else:
+
+        st.success(
+            "No major risk factors detected from the provided information."
+        )
 
 
     # --------------------------------------------------
@@ -225,22 +324,14 @@ if st.button("Predict Loan Default Risk"):
 
     st.progress(float(probability))
 
-
-    # --------------------------------------------------
-    # Disclaimer
-    # --------------------------------------------------
-
     st.caption(
-        "This percentage is a model estimate, not a guarantee "
-        "of whether a borrower will default."
+        f"Estimated default probability: {probability:.2%}"
     )
 
 
 # --------------------------------------------------
 # Model Performance
 # --------------------------------------------------
-
-st.divider()
 
 st.subheader("📊 Model Performance")
 
@@ -263,6 +354,17 @@ st.write(
 )
 
 st.caption(
-    "Performance metrics are based on the test dataset "
-    "used during model evaluation."
+    "Performance metrics are based on the test dataset used "
+    "during model evaluation."
+)
+
+
+# --------------------------------------------------
+# Disclaimer
+# --------------------------------------------------
+
+st.info(
+    "Disclaimer: This application is intended for educational "
+    "and demonstration purposes only. The prediction should "
+    "not be used as the sole basis for real-world lending decisions."
 )
