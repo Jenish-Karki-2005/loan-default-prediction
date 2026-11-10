@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 from pathlib import Path
+import auth
 
 # ---------------------------------------------------------
 # PAGE CONFIGURATION
@@ -12,6 +13,120 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# --------------------------------------------------
+# AUTHENTICATION
+# --------------------------------------------------
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+# --------------------------------------------------
+# LOGIN / REGISTRATION
+# --------------------------------------------------
+
+if not st.session_state.logged_in:
+
+    st.title("🔐 LoanGuard Login")
+
+    login_tab, register_tab = st.tabs(["Login", "Register"])
+
+    # -----------------------------
+    # LOGIN
+    # -----------------------------
+    with login_tab:
+
+        username = st.text_input("Username", key="login_username")
+        password = st.text_input(
+            "Password",
+            type="password",
+            key="login_password"
+        )
+
+        if st.button("Login", key="login_button"):
+
+            user = auth.login_user(username, password)
+
+            if user:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.rerun()
+            else:
+                st.error("Invalid username or password.")
+
+    # -----------------------------
+    # REGISTRATION
+    # -----------------------------
+    with register_tab:
+
+        new_username = st.text_input(
+            "Username",
+            key="register_username"
+        )
+
+        new_email = st.text_input(
+            "Email",
+            key="register_email"
+        )
+
+        new_password = st.text_input(
+            "Password",
+            type="password",
+            key="register_password"
+        )
+
+        confirm_password = st.text_input(
+            "Confirm Password",
+            type="password",
+            key="confirm_password"
+        )
+
+        if st.button("Create Account", key="register_button"):
+
+            if not new_username or not new_email or not new_password:
+                st.warning("Please fill in all required fields.")
+
+            elif new_password != confirm_password:
+                st.error("Passwords do not match.")
+            elif len(new_password) < 8:
+                st.error("Password must be at least 8 characters long.")
+            elif not any(char.isupper() for char in new_password):
+                st.error("Password must contain at least one uppercase letter.")
+
+            elif not any(char.islower() for char in new_password):
+                st.error("Password must contain at least one lowercase letter.")
+
+            elif not any(char.isdigit() for char in new_password):
+                st.error("Password must contain at least one number.")
+
+
+            else:
+                success, message = auth.register_user(
+                    new_username,
+                    new_email,
+                    new_password
+                )
+
+                if success:
+                    st.success(message)
+                    st.info("You can now login using your username and password.")
+                else:
+                    st.error(message)
+
+    st.stop()
+
+# --------------------------------------------------
+# LOGOUT
+# --------------------------------------------------
+
+if st.session_state.logged_in:
+    st.sidebar.write(
+        f"Logged in as: {st.session_state.username}"
+    )
+
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.pop("username", None)
+        st.rerun()
 
 # ---------------------------------------------------------
 # CUSTOM CSS

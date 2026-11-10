@@ -3,12 +3,17 @@ import bcrypt
 from pathlib import Path
 
 
-# Get the project folder
-BASE_DIR = Path(__file__).resolve().parent
+# --------------------------------------------------
+# DATABASE LOCATION
+# --------------------------------------------------
 
-# Database location
+BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "users.db"
 
+
+# --------------------------------------------------
+# CREATE DATABASE AND USERS TABLE
+# --------------------------------------------------
 
 def create_database():
     conn = sqlite3.connect(DB_PATH)
@@ -27,7 +32,12 @@ def create_database():
     conn.close()
 
 
+# --------------------------------------------------
+# REGISTER USER
+# --------------------------------------------------
+
 def register_user(username, email, password):
+
     # Hash the password using bcrypt
     password_hash = bcrypt.hashpw(
         password.encode("utf-8"),
@@ -51,21 +61,50 @@ def register_user(username, email, password):
         return True, "Registration successful."
 
     except sqlite3.IntegrityError:
+
         return False, "Username or email already exists."
 
     finally:
         conn.close()
 
 
-# Create the database
-create_database()
+# --------------------------------------------------
+# LOGIN USER
+# --------------------------------------------------
 
+def login_user(username, password):
 
-# Test registration
-print(
-    register_user(
-        "testuser",
-        "test@example.com",
-        "Test@123"
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT password_hash
+        FROM users
+        WHERE username = ?
+        """,
+        (username,)
     )
-)
+
+    result = cursor.fetchone()
+
+    conn.close()
+
+    if result:
+        stored_hash = result[0]
+
+        # Check entered password against stored bcrypt hash
+        if bcrypt.checkpw(
+            password.encode("utf-8"),
+            stored_hash.encode("utf-8")
+        ):
+            return True
+
+    return False
+
+
+# --------------------------------------------------
+# CREATE DATABASE WHEN FILE IS LOADED
+# --------------------------------------------------
+
+create_database()
