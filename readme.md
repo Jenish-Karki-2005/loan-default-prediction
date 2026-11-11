@@ -2,7 +2,7 @@
 
 ## 📌 Project Overview
 
-The **Loan Default Prediction & Credit Risk Analysis System** is a machine learning project that predicts the likelihood of serious loan delinquency based on a borrower's financial and credit-related information.
+**Loan Default Prediction & Credit Risk Analysis (LoanGuard)** is a machine learning and fintech application that predicts the likelihood of serious loan delinquency based on a borrower's financial and credit-related information.
 
 The system uses machine learning to analyze borrower information and provides:
 
@@ -11,8 +11,11 @@ The system uses machine learning to analyze borrower information and provides:
 - Risk factors
 - Model performance metrics
 - Interactive Streamlit-based prediction interface
+- User registration and login
+- Secure password hashing
+- PostgreSQL-based user authentication
 
-This project uses the **Give Me Some Credit** dataset and focuses on applying machine learning techniques to a real-world fintech use case.
+The project uses the **Give Me Some Credit** dataset and demonstrates an end-to-end machine learning workflow for a real-world credit-risk use case.
 
 ---
 
@@ -21,9 +24,12 @@ This project uses the **Give Me Some Credit** dataset and focuses on applying ma
 - Predict the likelihood of loan default.
 - Analyze borrower financial and credit information.
 - Compare different machine learning classification models.
+- Handle class imbalance in credit-risk data.
 - Evaluate model performance using appropriate classification metrics.
 - Build an interactive web application for loan risk prediction.
-- Demonstrate the use of machine learning in credit risk analysis.
+- Implement secure user authentication.
+- Deploy the application to the cloud.
+- Demonstrate the use of machine learning in a fintech application.
 
 ---
 
@@ -71,9 +77,9 @@ The model uses borrower features such as:
 The following preprocessing steps are performed:
 
 1. Removed the unnecessary index column.
-2. Separated the features and target variable.
+2. Separated features and target variable.
 3. Split the dataset into training and testing sets.
-4. Used stratified sampling to maintain the class distribution.
+4. Used stratified sampling to maintain class distribution.
 5. Handled missing values using median imputation.
 6. Applied feature scaling for Logistic Regression.
 7. Used balanced class weights to improve handling of the minority default class.
@@ -106,6 +112,8 @@ Configuration includes:
 - Random state = 42
 - Parallel processing
 
+The Random Forest model was selected for the deployed application based on its overall performance.
+
 ---
 
 ## 📈 Model Performance
@@ -128,7 +136,7 @@ Therefore, **precision, recall, and F1-score for the default class (Class 1)** a
 - **Accuracy:** Percentage of all predictions that were correct.
 - **Precision:** Among borrowers predicted as defaulters, the percentage who were actually defaulters.
 - **Recall:** Among actual defaulters, the percentage correctly identified by the model.
-- **F1-Score:** A balance between precision and recall.
+- **F1-Score:** Harmonic balance between precision and recall.
 
 ---
 
@@ -136,7 +144,20 @@ Therefore, **precision, recall, and F1-score for the default class (Class 1)** a
 
 The project includes an interactive **Streamlit** web application.
 
-Users can enter borrower information and receive a loan default risk prediction.
+Users can create an account, log in, enter borrower information, and receive a loan default risk prediction.
+
+### Authentication
+
+The application provides:
+
+- User registration
+- User login
+- Logout functionality
+- Password confirmation
+- Password-strength validation
+- Secure password hashing using **bcrypt**
+
+Passwords are never stored as plain text.
 
 ### Borrower Information
 
@@ -173,27 +194,89 @@ The application displays:
 
 ---
 
+## 🔐 Security & Database
+
+The authentication system uses **PostgreSQL** for storing user account information.
+
+### Database
+
+- **PostgreSQL** – Production database
+- **Neon** – Cloud PostgreSQL provider
+- **bcrypt** – Password hashing
+- **python-dotenv** – Environment variable management
+
+The database stores:
+
+- User ID
+- Username
+- Email
+- Bcrypt password hash
+
+Sensitive database credentials are stored using the `DATABASE_URL` environment variable and are not included in the GitHub repository.
+
+The `.env` file is excluded using `.gitignore`.
+
+---
+
+## ☁️ Deployment
+
+The LoanGuard application is deployed using **Render**.
+
+### Deployment Architecture
+
+```text
+User
+  ↓
+LoanGuard Streamlit Application
+  ↓
+Render
+  ↓
+PostgreSQL Connection
+  ↓
+Neon PostgreSQL
+  ↓
+Users Table
+```
+
+The deployed application uses the `DATABASE_URL` environment variable to securely connect to the Neon PostgreSQL database.
+
+The machine learning model is loaded by the Streamlit application and used for real-time borrower risk prediction.
+
+---
+
 ## 📸 Application Screenshots
 
-### 1. Borrower Information
+### 1. Login
+
+Users can securely log in to their LoanGuard account.
+
+![Login](./screenshots/login.png)
+
+### 2. Registration
+
+New users can create an account with password validation.
+
+![Registration](./screenshots/register.png)
+
+### 3. Borrower Information
 
 The application provides a two-column interface for entering borrower financial and credit information.
 
 ![Borrower Information](./screenshots/borrower-info.png)
 
-### 2. Loan Default Risk Result
+### 4. Loan Default Risk Result
 
 The system displays the estimated default probability and corresponding risk level.
 
 ![Loan Default Risk](./screenshots/risk-result.png)
 
-### 3. Risk Factors
+### 5. Risk Factors
 
 The application identifies important risk factors based on the information entered by the user.
 
 ![Risk Factors](./screenshots/risk-factors.png)
 
-### 4. Model Performance
+### 6. Model Performance
 
 The application displays the Random Forest model's evaluation metrics.
 
@@ -215,9 +298,11 @@ loan-predict/
 │
 ├── screenshots/
 │   ├── borrower-info.png
-│   ├── risk-result.png
+│   ├── login.png
+│   ├── model-performance.png
+│   ├── register.png
 │   ├── risk-factors.png
-│   └── model-performance.png
+│   └── risk-result.png
 │
 ├── src/
 │   ├── data_analysis.py
@@ -226,6 +311,7 @@ loan-predict/
 │   └── train_model.py
 │
 ├── app.py
+├── auth.py
 ├── requirements.txt
 ├── .gitignore
 └── readme.md
@@ -234,7 +320,10 @@ loan-predict/
 ### File Description
 
 **`app.py`**  
-Contains the Streamlit application for borrower input and loan default risk prediction.
+Contains the Streamlit application for user authentication, borrower input, and loan default risk prediction.
+
+**`auth.py`**  
+Handles user registration, login authentication, password hashing, and PostgreSQL database communication.
 
 **`src/data_analysis.py`**  
 Performs exploratory data analysis.
@@ -257,9 +346,14 @@ Stores model performance metrics displayed in the Streamlit application.
 **`requirements.txt`**  
 Contains the Python libraries required to run the project.
 
+**`.gitignore`**  
+Prevents sensitive files, virtual environments, local databases, and other unnecessary files from being committed to GitHub.
+
 ---
 
 ## 🛠️ Technologies Used
+
+### Programming & Data Science
 
 - **Python**
 - **Pandas** – Data manipulation and analysis
@@ -268,8 +362,24 @@ Contains the Python libraries required to run the project.
 - **Matplotlib** – Data visualization
 - **Seaborn** – Data visualization
 - **Joblib** – Model saving and loading
+
+### Application
+
 - **Streamlit** – Interactive web application
-- **Jupyter Notebook** – Data analysis and experimentation
+- **bcrypt** – Secure password hashing
+
+### Database
+
+- **PostgreSQL** – User authentication database
+- **Neon** – Cloud PostgreSQL database
+- **python-dotenv** – Environment variable management
+- **psycopg** – PostgreSQL connection
+
+### Deployment & Version Control
+
+- **Render** – Cloud deployment
+- **Git**
+- **GitHub**
 
 ---
 
@@ -278,7 +388,7 @@ Contains the Python libraries required to run the project.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Jenish-Karki-2005/loan-default-prediction.git
+git clone YOUR_GITHUB_REPOSITORY_URL
 ```
 
 ### 2. Navigate to the project directory
@@ -307,7 +417,17 @@ For Windows:
 pip install -r requirements.txt
 ```
 
-### 6. Run the Streamlit application
+### 6. Configure the database
+
+Create a `.env` file in the project root:
+
+```text
+DATABASE_URL=YOUR_NEON_POSTGRESQL_CONNECTION_STRING
+```
+
+Do not commit the `.env` file to GitHub.
+
+### 7. Run the Streamlit application
 
 ```bash
 streamlit run app.py
@@ -345,34 +465,9 @@ Loan Default Risk Prediction
 
 ---
 
-## ⚠️ Limitations
+## 🔄 Application Workflow
 
-- The dataset is highly imbalanced.
-- The model should not be used as the sole basis for real-world lending decisions.
-- The risk thresholds used in the application are predefined application-level categories.
-- Model performance depends on the quality and representativeness of the training data.
-- Further calibration and validation would be required for production financial applications.
-
----
-
-## 🚀 Future Improvements
-
-- Apply advanced class-imbalance techniques such as SMOTE.
-- Perform hyperparameter tuning.
-- Improve recall for the default class.
-- Add ROC-AUC and PR-AUC evaluation.
-- Add feature-importance visualization.
-- Improve probability calibration.
-- Deploy the application using a suitable cloud platform.
-- Add authentication and secure data handling.
-- Implement additional credit-risk scoring techniques.
-
----
-
-## 👨‍💻 Project Purpose
-
-This project demonstrates the application of **machine learning, data preprocessing, model evaluation, and deployment concepts** to a real-world fintech problem.
-
-It provides an end-to-end workflow from **raw borrower data → preprocessing → model training → evaluation → interactive risk prediction**.
-
-> **Disclaimer:** This application is intended for educational and demonstration purposes only. The prediction should not be used as the sole basis for real-world lending decisions.
+```text
+User Registration
+       ↓
+Secure Password
