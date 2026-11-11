@@ -1,27 +1,26 @@
-import sqlite3
+import os
+import psycopg
 import bcrypt
-from pathlib import Path
+from dotenv import load_dotenv
 
 
-# --------------------------------------------------
-# DATABASE LOCATION
-# --------------------------------------------------
+load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "users.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
-# --------------------------------------------------
-# CREATE DATABASE AND USERS TABLE
-# --------------------------------------------------
+def get_connection():
+    return psycopg.connect(DATABASE_URL)
+
 
 def create_database():
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL
@@ -29,29 +28,26 @@ def create_database():
     """)
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 
-# --------------------------------------------------
-# REGISTER USER
-# --------------------------------------------------
-
 def register_user(username, email, password):
 
-    # Hash the password using bcrypt
     password_hash = bcrypt.hashpw(
         password.encode("utf-8"),
         bcrypt.gensalt()
     ).decode("utf-8")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
 
     try:
+
         cursor.execute(
             """
             INSERT INTO users (username, email, password_hash)
-            VALUES (?, ?, ?)
+            VALUES (%s, %s, %s)
             """,
             (username, email, password_hash)
         )
@@ -60,40 +56,41 @@ def register_user(username, email, password):
 
         return True, "Registration successful."
 
-    except sqlite3.IntegrityError:
+    except psycopg.errors.UniqueViolation:
+
+        conn.rollback()
 
         return False, "Username or email already exists."
 
     finally:
+
+        cursor.close()
         conn.close()
 
 
-# --------------------------------------------------
-# LOGIN USER
-# --------------------------------------------------
-
 def login_user(username, password):
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         SELECT password_hash
         FROM users
-        WHERE username = ?
+        WHERE username = %s
         """,
         (username,)
     )
 
     result = cursor.fetchone()
 
+    cursor.close()
     conn.close()
 
     if result:
+
         stored_hash = result[0]
 
-        # Check entered password against stored bcrypt hash
         if bcrypt.checkpw(
             password.encode("utf-8"),
             stored_hash.encode("utf-8")
@@ -102,9 +99,5 @@ def login_user(username, password):
 
     return False
 
-
-# --------------------------------------------------
-# CREATE DATABASE WHEN FILE IS LOADED
-# --------------------------------------------------
 
 create_database()

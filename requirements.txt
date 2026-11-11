@@ -7,3 +7,5 @@ jupyter
 streamlit
 joblib
 bcrypt
+psycopg[binary]
+python-dotenv
